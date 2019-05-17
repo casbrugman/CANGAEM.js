@@ -53,7 +53,13 @@ namespace CANGAEM
 
         }
 
-        DistanceVector2(other: Object): Vector2
+        Distance(other: Object): number
+        {
+            return Math.sqrt(Math.pow(this.worldPosition.x - other.worldPosition.x, 2) + Math.pow(this.worldPosition.y - other.worldPosition.y, 2));
+
+        }
+
+        DistanceCenterVector2(other: Object): Vector2
         {
             return new Vector2(this.worldPosition.x - other.worldPosition.x, this.worldPosition.y - other.worldPosition.y)
         }
@@ -69,7 +75,7 @@ namespace CANGAEM
 
     }
 
-    export class ScreenSpaceObject extends Object
+    export class ScreenSpaceRectObject extends Object
     {
         size: Vector2 = new Vector2(0, 0)
         origin: Vector2 = new Vector2(0, 0)
@@ -79,26 +85,68 @@ namespace CANGAEM
             super()
         }
 
-        CollidesWith(other: ScreenSpaceObject): boolean
+        CollidesWith(other: ScreenSpaceRectObject): boolean
         {
-            return (this.position.x - this.origin.x < other.position.x - other.origin.x + other.size.x &&
-                this.position.x - this.origin.x + this.size.x > other.position.x - other.origin.x &&
-                this.position.y - this.origin.y < other.position.y - other.origin.y + other.size.y &&
-                this.position.y - this.origin.y + this.size.y > other.position.y - other.origin.y)
+            return (this.worldPosition.x - this.origin.x < other.worldPosition.x - other.origin.x + other.size.x &&
+                this.worldPosition.x - this.origin.x + this.size.x > other.worldPosition.x - other.origin.x &&
+                this.worldPosition.y - this.origin.y < other.worldPosition.y - other.origin.y + other.size.y &&
+                this.worldPosition.y - this.origin.y + this.size.y > other.worldPosition.y - other.origin.y)
         }
 
-        Center()
+        CenterOffset()
         {
             return new Vector2(this.size.x / 2, this.size.y / 2)
         }
 
-        DistanceVector2(other: ScreenSpaceObject): Vector2
+        DistanceCenter(other: any): number
         {
-            return new Vector2(this.worldPosition.x - this.size.x / 2 - other.worldPosition.x, this.worldPosition.y - this.size.y / 2 - other.worldPosition.y)
+            if (other instanceof ScreenSpaceRectObject)
+            {
+                return Math.sqrt(Math.pow((this.worldPosition.x - this.origin.x + this.CenterOffset().x) - (other.worldPosition.x - other.origin.x + other.CenterOffset().x), 2) + Math.pow((this.worldPosition.y - this.origin.y + this.CenterOffset().y) - (other.worldPosition.y - other.origin.y + other.CenterOffset().y), 2));
+
+            } else if (other instanceof Object)
+            {
+                return Math.sqrt(Math.pow((this.worldPosition.x - this.origin.x + this.CenterOffset().x) - other.worldPosition.x, 2) + Math.pow((this.worldPosition.y - this.origin.y + this.CenterOffset().y) - other.worldPosition.y, 2));
+            } else if (other instanceof Vector2)
+            {
+                return Math.sqrt(Math.pow((this.worldPosition.x - this.origin.x + this.CenterOffset().x) - other.x, 2) + Math.pow((this.worldPosition.y - this.origin.y + this.CenterOffset().y) - other.y, 2));
+            } else
+            {
+                throw new Error(`Expected CANGAEM.ScreenSpaceRectObject, CANGAEM.Object or CANGAEM.Vector2, got '${typeof other}'.`)
+            }
+        }
+
+        DistanceBoundingBox(other: any)
+        {
+            // if (other instanceof ScreenSpaceRectObject)
+            // {
+            //     //WIP
+
+            // } else
+            if (other instanceof Object)
+            {
+                let dx = Math.max(other.worldPosition.x - (this.worldPosition.x - this.origin.x + this.size.x / 2) - this.size.x / 2, 0, (this.worldPosition.x - this.origin.x + this.size.x / 2) - other.worldPosition.x - this.size.x / 2);
+                let dy = Math.max(other.worldPosition.y - (this.worldPosition.y - this.origin.y + this.size.y / 2) - this.size.y / 2, 0, (this.worldPosition.y - this.origin.y + this.size.x / 2) - other.worldPosition.y - this.size.y / 2);
+                return Math.sqrt(dx * dx + dy * dy);
+
+            } else if (other instanceof Vector2)
+            {
+                let dx = Math.max(other.x - (this.worldPosition.x - this.origin.x + this.size.x / 2) - this.size.x / 2, 0, (this.worldPosition.x - this.origin.x + this.size.x / 2) - other.x - this.size.x / 2);
+                let dy = Math.max(other.y - (this.worldPosition.y - this.origin.y + this.size.y / 2) - this.size.y / 2, 0, (this.worldPosition.y - this.origin.y + this.size.x / 2) - other.y - this.size.y / 2);
+                return Math.sqrt(dx * dx + dy * dy);
+            } else 
+            {
+                throw new Error(`Expected CANGAEM.Object or CANGAEM.Vector2, got '${typeof other}'.`)
+            }
+        }
+
+        DistanceVector2(other: ScreenSpaceRectObject): Vector2
+        {
+            return new Vector2(this.worldPosition.x - this.origin.x - this.size.x / 2 - other.worldPosition.x, this.worldPosition.y - this.origin.y - this.size.y / 2 - other.worldPosition.y)
         }
     }
 
-    export class ImageObject extends ScreenSpaceObject
+    export class ImageObject extends ScreenSpaceRectObject
     {
 
         image: CanvasImageSource
@@ -123,7 +171,7 @@ namespace CANGAEM
 
     }
 
-    export class RectObject extends ScreenSpaceObject
+    export class RectObject extends ScreenSpaceRectObject
     {
         fillColor: string = "black"
         strokeColor: string = "black"
@@ -176,6 +224,8 @@ namespace CANGAEM
 
             this.lastupdate = Date.now();
 
+            console.log("CANGAEM 1.1")
+
         }
 
         Update()
@@ -214,7 +264,7 @@ namespace CANGAEM
         x: number
         y: number
 
-        constructor(x: number, y: number)
+        constructor(x: number = 0, y: number = 0)
         {
             this.x = x
             this.y = y
@@ -225,11 +275,17 @@ namespace CANGAEM
             return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2))
         }
 
-        Normalized(): Vector2
+        Normalize(): Vector2
         {
             let len = this.Lenght()
             return new Vector2(this.x / len, this.y / len)
         }
+
+        FromAngle(angle: number): Vector2
+        {
+            return new Vector2(Math.cos(angle * Math.PI / 180), Math.sin(angle * Math.PI / 180))
+        }
+
     }
 
     export class InputHelper
@@ -291,4 +347,3 @@ namespace CANGAEM
 
     }
 }
-
