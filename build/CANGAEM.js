@@ -1,11 +1,12 @@
 var CANGAEM;
 (function (CANGAEM) {
     class Object {
-        constructor() {
+        constructor(position = new Vector2(0, 0)) {
             this.worldPosition = new Vector2(0, 0);
             this.position = new Vector2(0, 0);
             this.velocity = new Vector2(0, 0);
             this.children = [];
+            this.position = position;
         }
         ObjectHandler() {
             if (!(this instanceof Origin)) {
@@ -35,16 +36,23 @@ var CANGAEM;
         Add(object) {
             this.children.push(object);
             object.parent = this;
-            object.context = this.context;
             object.inputHelper = this.inputHelper;
+            object.SetContext(this.context);
+        }
+        SetContext(context) {
+            this.context = context;
+            this.children.forEach(child => {
+                child.SetContext(context);
+            });
         }
     }
     CANGAEM.Object = Object;
     class ScreenSpaceRectObject extends Object {
-        constructor() {
+        constructor(position = new Vector2(0, 0)) {
             super();
             this.size = new Vector2(0, 0);
             this.origin = new Vector2(0, 0);
+            this.position = position;
         }
         CollidesWith(other) {
             return (this.worldPosition.x - this.origin.x < other.worldPosition.x - other.origin.x + other.size.x &&
@@ -94,7 +102,7 @@ var CANGAEM;
     }
     CANGAEM.ScreenSpaceRectObject = ScreenSpaceRectObject;
     class ImageObject extends ScreenSpaceRectObject {
-        constructor(src = "defaulticon.png") {
+        constructor(src = "defaulticon.png", position = new Vector2(0, 0)) {
             super();
             this.image = document.createElement("img");
             this.image.setAttribute("src", src);
@@ -102,6 +110,7 @@ var CANGAEM;
                 this.size.x = this.image.width;
                 this.size.y = this.image.height;
             };
+            this.position = position;
         }
         Draw() {
             this.context.drawImage(this.image, this.worldPosition.x - this.origin.x, this.worldPosition.y - this.origin.x);
@@ -109,12 +118,13 @@ var CANGAEM;
     }
     CANGAEM.ImageObject = ImageObject;
     class RectObject extends ScreenSpaceRectObject {
-        constructor(size) {
+        constructor(size, position = new Vector2(0, 0)) {
             super();
             this.fillColor = "black";
             this.strokeColor = "black";
             this.strokeWidth = 0;
             this.size = size;
+            this.position = position;
         }
         Draw() {
             this.context.fillStyle = this.fillColor;
@@ -176,6 +186,10 @@ var CANGAEM;
         }
         FromAngle(angle) {
             return new Vector2(Math.cos(angle * Math.PI / 180), Math.sin(angle * Math.PI / 180));
+        }
+        Truncate(lenght) {
+            let normalized = this.Normalize();
+            return new Vector2(normalized.x * lenght, normalized.y * lenght);
         }
     }
     CANGAEM.Vector2 = Vector2;

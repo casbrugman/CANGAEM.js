@@ -16,8 +16,10 @@ namespace CANGAEM
         deltaTime: number;
 
         constructor()
+        constructor(position = new Vector2(0, 0))
         {
             this.children = []
+            this.position = position
         }
 
         ObjectHandler()
@@ -26,8 +28,8 @@ namespace CANGAEM
             {
                 this.Update()
 
-                this.position.x += this.velocity.x * this.deltaTime;
-                this.position.y += this.velocity.y * this.deltaTime;
+                this.position.x += this.velocity.x * this.deltaTime
+                this.position.y += this.velocity.y * this.deltaTime
 
                 this.worldPosition.x = this.parent.worldPosition.x + this.position.x
                 this.worldPosition.y = this.parent.worldPosition.y + this.position.y
@@ -68,9 +70,20 @@ namespace CANGAEM
         {
             this.children.push(object)
 
+
             object.parent = this
-            object.context = this.context
             object.inputHelper = this.inputHelper
+
+            object.SetContext(this.context);
+        }
+
+        SetContext(context: CanvasRenderingContext2D)
+        {
+            this.context = context
+            this.children.forEach(child =>
+            {
+                child.SetContext(context);
+            });
         }
 
     }
@@ -80,9 +93,11 @@ namespace CANGAEM
         size: Vector2 = new Vector2(0, 0)
         origin: Vector2 = new Vector2(0, 0)
 
-        constructor()
+        constructor(position = new Vector2(0, 0))
         {
             super()
+
+            this.position = position
         }
 
         CollidesWith(other: ScreenSpaceRectObject): boolean
@@ -151,7 +166,7 @@ namespace CANGAEM
 
         image: CanvasImageSource
 
-        constructor(src: string = "defaulticon.png")
+        constructor(src: string = "defaulticon.png", position: Vector2 = new Vector2(0, 0))
         {
             super()
 
@@ -162,6 +177,8 @@ namespace CANGAEM
                 this.size.x = <number> this.image.width;
                 this.size.y = <number> this.image.height;
             }
+
+            this.position = position;
         }
 
         Draw()
@@ -177,10 +194,11 @@ namespace CANGAEM
         strokeColor: string = "black"
         strokeWidth: number = 0
 
-        constructor(size: Vector2)
+        constructor(size: Vector2, position: Vector2 = new Vector2(0, 0))
         {
             super()
             this.size = size
+            this.position = position
         }
 
         Draw()
@@ -284,6 +302,12 @@ namespace CANGAEM
         FromAngle(angle: number): Vector2
         {
             return new Vector2(Math.cos(angle * Math.PI / 180), Math.sin(angle * Math.PI / 180))
+        }
+
+        Truncate(lenght: number)
+        {
+            let normalized = this.Normalize()
+            return new Vector2(normalized.x * lenght, normalized.y * lenght)
         }
 
     }
