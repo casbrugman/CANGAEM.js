@@ -15,7 +15,6 @@ namespace CANGAEM
         inputHelper: InputHelper;
         deltaTime: number;
 
-        constructor()
         constructor(position = new Vector2(0, 0))
         {
             this.children = []
@@ -48,6 +47,18 @@ namespace CANGAEM
         Update()
         {
 
+        }
+
+        Remove(object: Object)
+        {
+            for (let i in this.children)
+            {
+                if (this.children[i] == object)
+                {
+                    delete this.children[i]
+                    return
+                }
+            }
         }
 
         Draw()

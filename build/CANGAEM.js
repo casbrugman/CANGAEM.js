@@ -25,6 +25,14 @@ var CANGAEM;
         }
         Update() {
         }
+        Remove(object) {
+            for (let i in this.children) {
+                if (this.children[i] == object) {
+                    delete this.children[i];
+                    return;
+                }
+            }
+        }
         Draw() {
         }
         Distance(other) {
